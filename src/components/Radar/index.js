@@ -1,16 +1,12 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withStyles } from '@material-ui/core/styles'
-import { useTheme } from '@material-ui/core/styles'
-import useMediaQuery from '@material-ui/core/useMediaQuery'
 
 import DetailSection from './detail-section'
 
 import initateSvg from './d3/initate-svg'
 import drawBackgroundCirclesAndAxis from './d3/draw-background-circles-and-axis'
-import drawSlimBackgroundCirclesAndAxis from './d3/draw-slim-background-circles-and-axis'
 import drawQuadrantLabels from './d3/draw-quadrant-labels'
-import drawSlimQuadrantLabels from './d3/draw-slim-quadrant-labels'
 import drawBlips from './d3/draw-blips'
 
 const styles = theme => ({
@@ -19,11 +15,6 @@ const styles = theme => ({
     flexWrap: 'nowrap',
   },
 })
-
-const isSafari = () => {
-  const ua = navigator.userAgent.toLowerCase()
-  return ua.indexOf('safari') > -1 && ua.indexOf('chrome') === -1
-}
 
 class Radar extends Component {
   constructor(props) {
@@ -76,8 +67,7 @@ class Radar extends Component {
 
   drawSvg() {
     const { divId, svgId } = this
-    const { blips, smallMedia } = this.props
-    const { highlightedQuadrantIndex } = this.state
+    const { blips } = this.props
     const { width, height, radius } = this.dimensionalSizes()
     const { simulation, simulation2 } = this.simulationRefs
 
@@ -91,16 +81,11 @@ class Radar extends Component {
 
     const { g } = initateSvg(divId, svgId, width, height)
 
-    if (smallMedia || isSafari()) {
-      drawSlimBackgroundCirclesAndAxis(g, radius, quadrantNames, highlightedQuadrantIndex, highlightQuadrant)
-      drawSlimQuadrantLabels(g, radius, quadrantNames, highlightedQuadrantIndex)
-    } else {
-      drawBackgroundCirclesAndAxis(g, width, height, radius, quadrantNames, highlightQuadrant)
-      drawQuadrantLabels(g, radius, quadrantNames, highlightQuadrant)
-      const { simulation, simulation2 } = drawBlips(g, radius, blips, highlightQuadrant, clickOnBlip)
-      this.simulationRefs.simulation = simulation
-      this.simulationRefs.simulation2 = simulation2
-    }
+    drawBackgroundCirclesAndAxis(g, width, height, radius, quadrantNames, highlightQuadrant)
+    drawQuadrantLabels(g, radius, quadrantNames, highlightQuadrant)
+    const newSimulations = drawBlips(g, radius, blips, highlightQuadrant, clickOnBlip)
+    this.simulationRefs.simulation = newSimulations.simulation
+    this.simulationRefs.simulation2 = newSimulations.simulation2
   }
 
   componentDidMount() {
@@ -116,22 +101,12 @@ class Radar extends Component {
   }
 
   detailedSection(quadrantIndex) {
-    const { blips, smallMedia } = this.props
+    const { blips } = this.props
     const { highlightedQuadrantIndex, clickedBlip } = this.state
 
     const quadrantNames = [...new Set(blips.map(blip => blip.quadrant))]
 
-    return smallMedia ? (
-      highlightedQuadrantIndex === quadrantIndex &&
-        <DetailSection
-          key={quadrantIndex}
-          expand={true}
-          quadrantName={quadrantNames[quadrantIndex]}
-          onClickBlip={(quadrant, name) => this.clickOnBlip(quadrant, name)}
-          clickedBlip={clickedBlip}
-          entries={blips.filter(blip => blip.quadrant === quadrantNames[quadrantIndex])}
-        />
-    ) : (
+    return (
       <DetailSection
         key={quadrantIndex}
         expand={highlightedQuadrantIndex === quadrantIndex}
@@ -146,22 +121,10 @@ class Radar extends Component {
 
 
   render() {
-    const { classes, smallMedia } = this.props
+    const { classes } = this.props
     const { divId, svgId } = this
 
-    const smallMediaRootStyle = {
-      flexDirection: 'column',
-      alignItems: 'center',
-    }
-
-    return smallMedia ? (
-      <div className={classes.root} style={smallMediaRootStyle} >
-        <div id={divId}>
-          <svg id={svgId} />
-        </div>
-        {[0, 1, 2, 3].map(index => this.detailedSection(index))}
-      </div>
-    ) : (
+    return (
       <div className={classes.root}>
         {[3, 2].map(index => this.detailedSection(index))}
         <div id={divId}>
@@ -175,14 +138,10 @@ class Radar extends Component {
 
 Radar.propTypes = {
   blips: PropTypes.arrayOf(PropTypes.object).isRequired,
-  smallMedia: PropTypes.bool.isRequired,
 }
 
 export const StyledRadar = withStyles(styles)(Radar)
 
 export default props => (
-  <StyledRadar
-    {...props}
-    smallMedia={useMediaQuery(useTheme().breakpoints.down('sm'))}
-  />
+  <StyledRadar {...props} />
 )
