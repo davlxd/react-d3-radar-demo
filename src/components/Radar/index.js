@@ -10,7 +10,6 @@ import drawBlips from './d3/draw-blips'
 
 import './index.css'
 
-
 class Radar extends Component {
   constructor(props) {
     super(props)
@@ -43,19 +42,10 @@ class Radar extends Component {
   }
 
   dimensionalSizes() {
-    const { smallMedia } = this.props
     const DEFAULT_RADAR_WIDTH = 800, DEFAULT_RADAR_HEIGHT = 600
 
     let width = DEFAULT_RADAR_WIDTH, height = DEFAULT_RADAR_HEIGHT
     let radius = Math.min(width / 2, height / 2) * 0.95
-
-    if (smallMedia) {
-      const SLIM_RADAR_DEFAULT_WIDTH = 500
-      const SLIM_WIDTH_PADDING = 20 //TODO
-      width = Math.min(window.innerWidth - SLIM_WIDTH_PADDING, SLIM_RADAR_DEFAULT_WIDTH)
-      height = width * (6 / 8)
-      radius = Math.min(width / 2, height / 2) * 0.9
-    }
 
     return { width, height, radius }
   }
@@ -88,9 +78,9 @@ class Radar extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { blips, smallMedia } = this.props
+    const { blips } = this.props
 
-    if (blips !== prevProps.blips || smallMedia !== prevProps.smallMedia) {
+    if (blips !== prevProps.blips) {
       this.drawSvg()
     }
   }

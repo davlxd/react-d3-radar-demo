@@ -1,40 +1,39 @@
 .DetailSection-root {
-    padding-top: 40;
-    cursor: default;
-    user-select: none;
-    transition: width 0.2s ease-out;
-    overflow: hidden;
+  padding-top: 40;
+  cursor: default;
+  user-select: none;
+  transition: width 0.2s ease-out;
+  overflow: hidden;
 }
 
 .DetailSection-entries {
-    height: 80%;
-    column-gap: 0;
-    width: 200;
-    column-width: 200,
+  height: 80%;
+  column-gap: 0;
+  width: 200;
+  column-width: 200,
 }
 
 .DetailSection-blipName {
-    cursor: pointer;
-    display: block;
-    margin-top: 0.3em;
-    margin-bottom: 0.3em;
+  cursor: pointer;
+  display: block;
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
 }
 
 .DetailSection-quadrantName {
-    text-transform: uppercase;
-    width: 200;
-    /* transform: ({ flipped }) => flipped ? 'scale(-1, 1)' : null, */
-    font-weight: bold;
-    font-size: 1.5em;
-    display: block;
-    margin-bottom: 0.5em;
+  text-transform: uppercase;
+  width: 200;
+  font-weight: bold;
+  font-size: 1.5em;
+  display: block;
+  margin-bottom: 0.5em;
 }
 
 .DetailSection-desc {
-    overflow: hidden;
-    user-select: text;
-    word-wrap: break-word;
-    margin-top: 0;
-    transition: max-height 0.3s linear, margin-bottom 0.3s linear;
-    font-weight: 100;
+  overflow: hidden;
+  user-select: text;
+  word-wrap: break-word;
+  margin-top: 0;
+  transition: max-height 0.3s linear, margin-bottom 0.3s linear;
+  font-weight: 100;
 }

@@ -1,5 +1,6 @@
 import React, { FC } from 'react'
 import Radar from './components/Radar'
+import './App.css'
 
 
 const defaultBlips = [ // make desc compusaory
@@ -49,7 +50,9 @@ const defaultBlips = [ // make desc compusaory
 ]
 
 const App: FC = () => (
-  <Radar blips={ defaultBlips } />
+  <div className='App-root'>
+    <Radar blips={ defaultBlips } />
+  </div>
 )
 
 export default App
