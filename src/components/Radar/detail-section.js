@@ -5,7 +5,6 @@ import Typography from '@material-ui/core/Typography'
 import { useTheme } from '@material-ui/core/styles'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 
-import BlipDescTitle from './blip-desc-title'
 
 const DEFAULT_WIDTH = 200
 const SLIM_WIDTH = 200
@@ -24,6 +23,12 @@ const styles = theme => ({
     columnGap: 0,
     width: ({ smallMedia }) => smallMedia ? SLIM_WIDTH : DEFAULT_WIDTH,
     columnWidth: ({ smallMedia }) => smallMedia ? SLIM_WIDTH : DEFAULT_WIDTH,
+  },
+  blipName: {
+    cursor: 'pointer',
+    display: 'block',
+    marginTop: '0.3em',
+    marginBottom: '0.3em',
   },
   entry: {
     transform: ({ flipped }) => flipped ? 'scale(-1, 1)' : null,
@@ -75,10 +80,8 @@ class DetailSection extends Component {
         <div className={classes.entries}>
           {entries.map((entry, id) => (
             <div className={classes.entry} key={id}>
-              <BlipDescTitle entry={entry} onClick={() => onClickBlip(entry.quadrant, entry.name)} />
-              {entry.desc &&
-                <p className={classes.desc} style={blipDescDynamicStyle(entry)}> {entry.desc} </p>
-              }
+              <span className={classes.blipName} onClick={() => onClickBlip(entry.quadrant, entry.name)}>{entry.name}</span>
+              <p className={classes.desc} style={blipDescDynamicStyle(entry)}>{entry.desc}</p>
             </div>
           ))}
         </div>
