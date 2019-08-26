@@ -1,20 +1,15 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { withStyles } from '@material-ui/core/styles'
 
-import DetailSection from './detail-section'
+import DetailSection from './DetailSection'
 
 import initateSvg from './d3/initate-svg'
 import drawBackgroundCirclesAndAxis from './d3/draw-background-circles-and-axis'
 import drawQuadrantLabels from './d3/draw-quadrant-labels'
 import drawBlips from './d3/draw-blips'
 
-const styles = theme => ({
-  root: {
-    display: 'flex',
-    flexWrap: 'nowrap',
-  },
-})
+import './index.css'
+
 
 class Radar extends Component {
   constructor(props) {
@@ -121,11 +116,10 @@ class Radar extends Component {
 
 
   render() {
-    const { classes } = this.props
     const { divId, svgId } = this
 
     return (
-      <div className={classes.root}>
+      <div className='Radar-root'>
         {[3, 2].map(index => this.detailedSection(index))}
         <div id={divId}>
           <svg id={svgId} />
@@ -140,8 +134,5 @@ Radar.propTypes = {
   blips: PropTypes.arrayOf(PropTypes.object).isRequired,
 }
 
-export const StyledRadar = withStyles(styles)(Radar)
 
-export default props => (
-  <StyledRadar {...props} />
-)
+export default Radar
