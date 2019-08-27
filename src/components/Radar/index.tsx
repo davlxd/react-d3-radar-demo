@@ -4,7 +4,7 @@ import * as d3 from 'd3'
 import DetailSection from './DetailSection'
 
 import initateSvg from './d3/InitateSvg'
-import drawBackgroundCirclesAndAxis from './d3/draw-background-circles-and-axis'
+import drawBackgroundCirclesAndAxis from './d3/DrawBackgroundCirclesAndAxis'
 import drawQuadrantLabels from './d3/draw-quadrant-labels'
 import drawBlips from './d3/draw-blips'
 
@@ -32,7 +32,7 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     simulation: Simulation<SimulationNodeDatum, undefined>,
     simulation2: Simulation<SimulationNodeDatum, undefined>,
   }
-  rootSvgGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any> | null
+  rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>
 
   constructor(props: { blips: Blip[] }) {
     super(props)
@@ -42,7 +42,7 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
       simulation: d3.forceSimulation(),
       simulation2: d3.forceSimulation(),
     }
-    this.rootSvgGroupToDraw = d3.select('_')
+    this.rootSVGGroupToDraw = d3.select('_')
 
     this.state = {
       clickedBlip: { quadrant: '_', name: '_' },
@@ -70,16 +70,28 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     return { width, height, radius }
   }
 
-  drawSvg() {
+  drawSVGBackground() {
     const { svgId } = this
-    const { width, height } = this.dimensionalSizes()
-
-    this.rootSvgGroupToDraw = initateSvg(svgId, width, height)
-  }
-
-  drawBackgroundAndBlips() {
     const { blips } = this.props
     const { width, height, radius } = this.dimensionalSizes()
+
+    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
+    const toHighlightQuadrant = (quadrantIndex: number) => {
+      this.setState({ highlightedQuadrantIndex: quadrantIndex })
+    }
+
+    this.rootSVGGroupToDraw = initateSvg(svgId, width, height)
+    drawBackgroundCirclesAndAxis(
+      this.rootSVGGroupToDraw,
+      radius,
+      quadrantNames,
+      toHighlightQuadrant
+    )
+  }
+
+  drawQuadrantLabelsAndBlips() {
+    const { blips } = this.props
+    const { radius } = this.dimensionalSizes()
     const { simulation, simulation2 } = this.simulationRefs
 
     const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
@@ -89,22 +101,15 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
 
     const highlightQuadrant = (quadrantIndex: number) => this.setState({ highlightedQuadrantIndex: quadrantIndex })
 
-    drawBackgroundCirclesAndAxis(
-      this.rootSvgGroupToDraw,
-      width,
-      height,
-      radius,
-      quadrantNames,
-      highlightQuadrant
-    )
     drawQuadrantLabels(
-      this.rootSvgGroupToDraw,
+      this.rootSVGGroupToDraw,
       radius,
       quadrantNames,
       highlightQuadrant
     )
+
     const newSimulations = drawBlips(
-      this.rootSvgGroupToDraw,
+      this.rootSVGGroupToDraw,
       radius,
       blips,
       highlightQuadrant,
@@ -115,13 +120,13 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
   }
 
   componentDidMount() {
-    this.drawSvg()
-    this.drawBackgroundAndBlips()
+    this.drawSVGBackground()
+    this.drawQuadrantLabelsAndBlips()
   }
 
   componentDidUpdate(prevProps: { blips: Blip[] }) {
     if (this.props.blips !== prevProps.blips) {
-      this.drawBackgroundAndBlips()
+      this.drawQuadrantLabelsAndBlips()
     }
   }
 
