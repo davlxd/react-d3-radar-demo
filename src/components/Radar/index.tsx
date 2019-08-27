@@ -38,16 +38,16 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     super(props)
 
     this.svgId = 'radar-chart-svg'
-
-    this.state = {
-      clickedBlip: { quadrant: '', name: '' },
-      highlightedQuadrantIndex: 0,
-    }
     this.simulationRefs = {
       simulation: d3.forceSimulation(),
       simulation2: d3.forceSimulation(),
     }
-    this.rootSvgGroupToDraw = d3.select(this.svgId)
+    this.rootSvgGroupToDraw = d3.select('_')
+
+    this.state = {
+      clickedBlip: { quadrant: '_', name: '_' },
+      highlightedQuadrantIndex: 0,
+    }
 
     this.clickOnBlip = this.clickOnBlip.bind(this)
   }
