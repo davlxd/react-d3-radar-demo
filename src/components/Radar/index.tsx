@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
 
 import DetailSection from './DetailSection'
 
@@ -10,8 +9,34 @@ import drawBlips from './d3/draw-blips'
 
 import './index.css'
 
-class Radar extends Component {
-  constructor(props) {
+export interface Blip {
+  quadrant: string,
+  name: string,
+  score: number,
+  desc: string,
+}
+
+interface RadarState {
+  clickedBlip: {
+    quadrant: string,
+    name: string,
+  },
+  highlightedQuadrantIndex: number,
+}
+
+export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
+  divId: string
+  svgId: string
+  simulationRefs: {
+    simulation: {
+      stop: () => string
+    },
+    simulation2: {
+      stop: () => string
+    }
+  }
+
+  constructor(props: { blips: Blip[] }) {
     super(props)
 
     this.divId = 'radar-chart-div'
@@ -32,7 +57,7 @@ class Radar extends Component {
     }
   }
 
-  clickOnBlip(quadrant, name){
+  clickOnBlip(quadrant: string, name: string){
     const { quadrant: prevQuadrant, name: prevName } = this.state.clickedBlip
     if (prevQuadrant === quadrant && prevName === name) {
       this.setState({ clickedBlip: { quadrant: '', name: '' } })
@@ -56,13 +81,13 @@ class Radar extends Component {
     const { width, height, radius } = this.dimensionalSizes()
     const { simulation, simulation2 } = this.simulationRefs
 
-    const quadrantNames = [...new Set(blips.map(blip => blip.quadrant))]
+    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
 
     simulation.stop()
     simulation2.stop()
 
-    const highlightQuadrant = quadrantIndex => this.setState({ highlightedQuadrantIndex: quadrantIndex })
-    const clickOnBlip = (quadrant, name) => this.clickOnBlip(quadrant, name)
+    const highlightQuadrant = (quadrantIndex: number) => this.setState({ highlightedQuadrantIndex: quadrantIndex })
+    const clickOnBlip = (quadrant: string, name: string) => this.clickOnBlip(quadrant, name)
 
     const { g } = initateSvg(divId, svgId, width, height)
 
@@ -77,7 +102,7 @@ class Radar extends Component {
     this.drawSvg()
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: { blips: Blip[] }) {
     const { blips } = this.props
 
     if (blips !== prevProps.blips) {
@@ -85,18 +110,18 @@ class Radar extends Component {
     }
   }
 
-  detailedSection(quadrantIndex) {
+  detailedSection(quadrantIndex: number) {
     const { blips } = this.props
     const { highlightedQuadrantIndex, clickedBlip } = this.state
 
-    const quadrantNames = [...new Set(blips.map(blip => blip.quadrant))]
+    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
 
     return (
       <DetailSection
         key={quadrantIndex}
         expand={highlightedQuadrantIndex === quadrantIndex}
         quadrantName={quadrantNames[quadrantIndex]}
-        onClickBlip={(quadrant, name) => this.clickOnBlip(quadrant, name)}
+        onClickBlip={(quadrant: string, name: string) => this.clickOnBlip(quadrant, name)}
         entries={blips.filter(blip => blip.quadrant === quadrantNames[quadrantIndex])}
         clickedBlip={clickedBlip}
         flipped={quadrantIndex === 2 || quadrantIndex === 3}
@@ -119,10 +144,3 @@ class Radar extends Component {
     )
   }
 }
-
-Radar.propTypes = {
-  blips: PropTypes.arrayOf(PropTypes.object).isRequired,
-}
-
-
-export default Radar
