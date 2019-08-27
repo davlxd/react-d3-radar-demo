@@ -52,6 +52,19 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     this.clickOnBlip = this.clickOnBlip.bind(this)
   }
 
+  get quadrantNames() {
+    return [...Array.from(new Set<string>(this.props.blips.map(blip => blip.quadrant)))]
+  }
+
+  get dimensionalSizes() {
+    const DEFAULT_RADAR_WIDTH = 800, DEFAULT_RADAR_HEIGHT = 600
+
+    let width = DEFAULT_RADAR_WIDTH, height = DEFAULT_RADAR_HEIGHT
+    let radius = Math.min(width / 2, height / 2) * 0.95
+
+    return { width, height, radius }
+  }
+
   clickOnBlip(quadrant: string, name: string){
     const { quadrant: prevQuadrant, name: prevName } = this.state.clickedBlip
     if (prevQuadrant === quadrant && prevName === name) {
@@ -61,21 +74,10 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     this.setState({ clickedBlip: { quadrant, name } })
   }
 
-  dimensionalSizes() {
-    const DEFAULT_RADAR_WIDTH = 800, DEFAULT_RADAR_HEIGHT = 600
-
-    let width = DEFAULT_RADAR_WIDTH, height = DEFAULT_RADAR_HEIGHT
-    let radius = Math.min(width / 2, height / 2) * 0.95
-
-    return { width, height, radius }
-  }
-
   drawSVGBackground() {
     const { svgId } = this
-    const { blips } = this.props
-    const { width, height, radius } = this.dimensionalSizes()
+    const { width, height, radius } = this.dimensionalSizes
 
-    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
     const toHighlightQuadrant = (quadrantIndex: number) => {
       this.setState({ highlightedQuadrantIndex: quadrantIndex })
     }
@@ -84,17 +86,15 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     drawBackgroundCirclesAndAxis(
       this.rootSVGGroupToDraw,
       radius,
-      quadrantNames,
+      this.quadrantNames,
       toHighlightQuadrant
     )
   }
 
   drawQuadrantLabelsAndBlips() {
     const { blips } = this.props
-    const { radius } = this.dimensionalSizes()
+    const { radius } = this.dimensionalSizes
     const { simulation, simulation2 } = this.simulationRefs
-
-    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
 
     simulation.stop()
     simulation2.stop()
@@ -104,7 +104,7 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     drawQuadrantLabels(
       this.rootSVGGroupToDraw,
       radius,
-      quadrantNames,
+      this.quadrantNames,
       highlightQuadrant
     )
 
@@ -134,15 +134,13 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     const { blips } = this.props
     const { highlightedQuadrantIndex, clickedBlip } = this.state
 
-    const quadrantNames = [...Array.from(new Set<string>(blips.map(blip => blip.quadrant)))]
-
     return (
       <DetailSection
         key={quadrantIndex}
         expand={highlightedQuadrantIndex === quadrantIndex}
-        quadrantName={quadrantNames[quadrantIndex]}
+        quadrantName={this.quadrantNames[quadrantIndex]}
         onClickBlip={this.clickOnBlip}
-        entries={blips.filter(blip => blip.quadrant === quadrantNames[quadrantIndex])}
+        entries={blips.filter(blip => blip.quadrant === this.quadrantNames[quadrantIndex])}
         clickedBlip={clickedBlip}
         flipped={quadrantIndex === 2 || quadrantIndex === 3}
       />
