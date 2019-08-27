@@ -5,7 +5,7 @@ import DetailSection from './DetailSection'
 
 import initateSvg from './d3/InitateSvg'
 import drawBackgroundCirclesAndAxis from './d3/DrawBackgroundCirclesAndAxis'
-import drawQuadrantLabels from './d3/draw-quadrant-labels'
+import drawQuadrantLabels from './d3/DrawQuadrantLabels'
 import drawBlips from './d3/draw-blips'
 
 import './index.css'

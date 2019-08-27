@@ -2,7 +2,7 @@ import * as d3 from 'd3'
 import {
   hoverInQuadrantEffect,
   hoverOutQuadrantEffect,
-} from './quadrant-hover-effect'
+} from './QuadrantHoverEffect'
 
 export default (
   rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
