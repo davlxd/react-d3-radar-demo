@@ -1,4 +1,7 @@
 import * as d3 from 'd3'
+import { SimulationNodeDatum } from 'd3'
+
+import { Blip } from '..'
 
 import forceWithinQuandrant from './force-within-quadrant'
 import forcePlaceholdingCirclesTailingDad from './force-placeholding-circles-tailing-dad'
@@ -8,10 +11,25 @@ import {
 } from './QuadrantHoverEffect'
 
 
-const enhanceBlipsData = (radius, blips) => {
+export interface BlipSimulationNode extends Blip { 
+  x: number,
+  y: number,
+  r: number,
+  quadrantIndex: number,
+  shapeName: string,
+  radius?: number,
+  dad?: BlipSimulationNode,
+  nth?: number,
+  isPlaceholder?: boolean,
+}
+
+const enhanceBlipsData = (
+  radius: number,
+  blips: Blip[]
+): BlipSimulationNode[] => {
   const blipShapes = [ { shapeName: 'rect', }, { shapeName: 'circle', } ]
 
-  const uniqueQuadrantNames = [...new Set(blips.map(blip => blip.quadrant))]
+  const uniqueQuadrantNames = [...Array.from(new Set(blips.map(blip => blip.quadrant)))]
   const minAndMaxOfBlipScore = blips.map(blip => blip.score)
                                    .reduce((acc, cur) => [Math.min(acc[0], cur), Math.max(acc[1], cur)], [Infinity, -Infinity])
   const scoreToRadiusScale = d3.scaleLinear().domain(minAndMaxOfBlipScore).range([radius, 50])
@@ -30,7 +48,13 @@ const enhanceBlipsData = (radius, blips) => {
   })
 }
 
-export default (g, radius, blips, hoverOnQuadrant, clickOnBlip) => {
+export default (
+  g: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
+  radius: number, 
+  blips: Blip[], 
+  hoverOnQuadrant: (quadrantIndex: number) => void, 
+  clickOnBlip: (quadrant: string, name: string) => void
+) => {
   const color = d3.scaleOrdinal(d3.schemeCategory10)
   const enhancedBlips = enhanceBlipsData(radius, blips)
 
@@ -59,7 +83,7 @@ export default (g, radius, blips, hoverOnQuadrant, clickOnBlip) => {
 
   const eachBlipSymbol = eachBlip.append(d => document.createElementNS(d3.namespaces.svg, d.shapeName))
                                  .attr('class', 'blip-element blip-symbol')
-                                 .style('fill', d => color(d.quadrantIndex))
+                                 .style('fill', d => color(d.quadrantIndex.toString()))
                                  .attr('width', 22)
                                  .attr('height', 22)
                                  .attr('r', 12)
@@ -70,10 +94,10 @@ export default (g, radius, blips, hoverOnQuadrant, clickOnBlip) => {
                                .attr('class', 'blip-element blip-text')
                                .text(d => d.name)
 
-  const blipSymbolBBox = index => eachBlipSymbol.nodes()[index].getBBox()
-  const blipTextBBox = index => eachBlipText.nodes()[index].getBBox()
-
-  const positionSymbolAndText = withPlaceholdingCircles => () => {
+  const blipSymbolBBox = (index: number) => (eachBlipSymbol.nodes()[index] as SVGGraphicsElement).getBBox()
+  const blipTextBBox = (index: number) => (eachBlipText.nodes()[index] as SVGGraphicsElement).getBBox()
+                             
+  const positionSymbolAndText = (withPlaceholdingCircles: boolean) => () => {
     eachBlipSymbol.attr('x', ({ x }, i) => x - blipSymbolBBox(i).width / 2)
                   .attr('y', ({ y }, i) => y - blipSymbolBBox(i).height / 2)
                   .attr('cx', ({ x }) => x)
@@ -89,19 +113,19 @@ export default (g, radius, blips, hoverOnQuadrant, clickOnBlip) => {
   }
 
   const simulation = d3.forceSimulation(enhancedBlips)
-                       .force('radial', d3.forceRadial(d => d.r))
+                       .force('radial', d3.forceRadial(d => (d as BlipSimulationNode).r))
                        .force('in-quandrant', forceWithinQuandrant())
                        .on('tick', positionSymbolAndText(false))
                        .alphaDecay(0.01)
 
 
   const BLIP_COLLIDE_RADIUS_MARGIN = 10
-  const addPlaceholdingCircleForRadialCollideForce = blips => blips.flatMap((blip, index) => {
+  const addPlaceholdingCircleForRadialCollideForce = (blips: BlipSimulationNode[]) => blips.flatMap((blip, index) => {
     blip.radius = Math.max(blipSymbolBBox(index).width, blipSymbolBBox(index).height) / 2 + BLIP_COLLIDE_RADIUS_MARGIN
     const placeholdingCircleAmount = blipTextBBox(index).height === 0 ? 0 : Math.floor(blipTextBBox(index).width / blipTextBBox(index).height)
     return [
       blip,
-      ...[...Array(placeholdingCircleAmount).keys()].map(nthForBlip => ({
+      ...[...Array.from(Array(placeholdingCircleAmount).keys())].map(nthForBlip => ({
         dad: blip,
         isPlaceholder: true,
         nth: nthForBlip,
@@ -120,16 +144,16 @@ export default (g, radius, blips, hoverOnQuadrant, clickOnBlip) => {
                                                       .attr('class', 'fake-circle')
                                                       .append('circle')
                                                       .style('pointer-events', 'none')
-                                                      .attr('r', d => d.radius)
+                                                      .attr('r', d => d.radius || null)
                                                       .attr('cx', d => d.x)
                                                       .attr('cy', d => d.x)
                                                       .attr('fill-opacity', 0)
                                                       .attr('stroke', '#000000')
                                                       .attr('stroke-opacity', 0)
-                                                      .attr('dad-name', d => d.dad.name)
+                                                      .attr('dad-name', d => d.dad ? d.dad.name : '')
 
   const simulation2 = d3.forceSimulation(withPlaceholdingCircles)
-                        .force('collide', d3.forceCollide(d => d.radius).strength(0.999))
+                        .force('collide', d3.forceCollide(d => (d as BlipSimulationNode).radius || 0).strength(0.999))
                         .force('position-placeholding-circles', forcePlaceholdingCirclesTailingDad())
                         .on('tick', positionSymbolAndText(true))
                         .alphaDecay(0.01)

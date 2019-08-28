@@ -5,12 +5,12 @@ import {
 
 
 export default (
-  g: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
+  rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
   radius: number, 
   quadrantNames: string[],
   hoverOnQuadrant: (quadrantIndex: number) => void
 ): void => {
-  const quadrantLabelsG = g.append('g').attr('class', 'quadrant-labels')
+  const quadrantLabelsG = rootSVGGroupToDraw.append('g').attr('class', 'quadrant-labels')
 
   const eachQuadrantLabel = quadrantLabelsG.selectAll('text')
                                            .data(quadrantNames)
@@ -23,11 +23,11 @@ export default (
                                              .attr('font-weight', 200)
                                              .text(d => d.toUpperCase())
                                              .on('mouseover', (d, i) => {
-                                               hoverInQuadrantEffect(g, i)
+                                               hoverInQuadrantEffect(rootSVGGroupToDraw, i)
                                                hoverOnQuadrant(i)
                                              })
                                              .on('mouseout', (d, i) => {
-                                               hoverOutQuadrantEffect(g, i)
+                                               hoverOutQuadrantEffect(rootSVGGroupToDraw, i)
                                              })
 
   const quadrantLabelBBox = (index: number) => eachQuadrantLabel.nodes()[index].getBBox()

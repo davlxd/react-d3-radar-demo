@@ -6,7 +6,7 @@ import DetailSection from './DetailSection'
 import initateSvg from './d3/InitateSvg'
 import drawBackgroundCirclesAndAxis from './d3/DrawBackgroundCirclesAndAxis'
 import drawQuadrantLabels from './d3/DrawQuadrantLabels'
-import drawBlips from './d3/draw-blips'
+import drawBlips, { BlipSimulationNode } from './d3/DrawBlips'
 
 import './index.css'
 import { Simulation, SimulationNodeDatum } from 'd3-force'
@@ -29,8 +29,8 @@ interface RadarState {
 export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
   svgId: string
   simulationRefs: {
-    simulation: Simulation<SimulationNodeDatum, undefined>,
-    simulation2: Simulation<SimulationNodeDatum, undefined>,
+    simulation: Simulation<BlipSimulationNode, undefined>,
+    simulation2: Simulation<BlipSimulationNode, undefined> | any,
   }
   rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>
 
