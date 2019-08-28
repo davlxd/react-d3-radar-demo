@@ -2,7 +2,10 @@ import * as d3 from 'd3'
 
 import forceWithinQuandrant from './force-within-quadrant'
 import forcePlaceholdingCirclesTailingDad from './force-placeholding-circles-tailing-dad'
-import { hoverInQuadrantEffect, hoverOutQuadrantEffect } from './QuadrantHoverEffect'
+import {
+  hoverInQuadrantEffect,
+  hoverOutQuadrantEffect
+} from './QuadrantHoverEffect'
 
 
 const enhanceBlipsData = (radius, blips) => {
