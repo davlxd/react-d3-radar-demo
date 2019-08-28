@@ -1,6 +1,4 @@
 import * as d3 from 'd3'
-import { SimulationNodeDatum } from 'd3'
-
 import { Blip } from '..'
 
 import forceWithinQuandrant from './force-within-quadrant'
@@ -14,16 +12,27 @@ import {
 export interface BlipSimulationNode extends Blip { 
   x: number,
   y: number,
-  r: number,
+  distanceToCenter: number,
   quadrantIndex: number,
   shapeName: string,
-  radius?: number,
-  dad?: BlipSimulationNode,
-  nth?: number,
-  isPlaceholder?: boolean,
+  collideRadius: number,
 }
 
-const enhanceBlipsData = (
+export interface TextPlaceholdingCircleSimulationNode { 
+  dad: BlipSimulationNode;
+  nth: number;
+  collideRadius: number;
+  x: number;
+  y: number;
+}
+
+export interface CollideAvoidNode {
+  x: number;
+  y: number;
+  collideRadius: number;
+}
+
+const attachSimulationDataToBlips = (
   radius: number,
   blips: Blip[]
 ): BlipSimulationNode[] => {
@@ -31,17 +40,21 @@ const enhanceBlipsData = (
 
   const uniqueQuadrantNames = [...Array.from(new Set(blips.map(blip => blip.quadrant)))]
   const minAndMaxOfBlipScore = blips.map(blip => blip.score)
-                                   .reduce((acc, cur) => [Math.min(acc[0], cur), Math.max(acc[1], cur)], [Infinity, -Infinity])
-  const scoreToRadiusScale = d3.scaleLinear().domain(minAndMaxOfBlipScore).range([radius, 50])
+                                    .reduce((acc, cur) => {
+                                      return [Math.min(acc[0], cur), Math.max(acc[1], cur)]
+                                    }, [Infinity, -Infinity])
+  const scoreToRadiusScale = d3.scaleLinear()
+                               .domain(minAndMaxOfBlipScore)
+                               .range([radius, 50])
 
   return blips.map(blip => {
     const quadrantIndex = uniqueQuadrantNames.indexOf(blip.quadrant)
-    const r = scoreToRadiusScale(blip.score)
     return {
       ...blip,
-      r,
+      distanceToCenter: scoreToRadiusScale(blip.score),
       quadrantIndex,
       ...blipShapes[quadrantIndex % blipShapes.length],
+      collideRadius: 0, // will set later via reflection
       x: 0,
       y: 0,
     }
@@ -49,37 +62,37 @@ const enhanceBlipsData = (
 }
 
 export default (
-  g: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
+  rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
   radius: number, 
   blips: Blip[], 
   hoverOnQuadrant: (quadrantIndex: number) => void, 
   clickOnBlip: (quadrant: string, name: string) => void
 ) => {
   const color = d3.scaleOrdinal(d3.schemeCategory10)
-  const enhancedBlips = enhanceBlipsData(radius, blips)
+  const enhancedBlips = attachSimulationDataToBlips(radius, blips)
 
-  const blipsG = g.append('g')
-                  .attr('class', 'blips')
+  const blipsSVGGroup = rootSVGGroupToDraw.append('g')
+                                          .attr('class', 'blips')
 
-  const eachBlip = blipsG.selectAll('g.blip')
-                         .data(enhancedBlips)
-                         .enter()
-                           .append('g')
-                           .attr('class', 'blip')
-                           .attr('quadrant-name', d => d.quadrant)
-                           .attr('quadrant-index', d => d.quadrantIndex)
-                           .style('cursor', 'pointer')
-                           .style('pointer-events', 'click')
-                           .on('mouseover', ({ quadrantIndex }) => {
-                             hoverInQuadrantEffect(g, quadrantIndex)
-                             hoverOnQuadrant(quadrantIndex)
-                           })
-                           .on('mouseout', ({ quadrantIndex}) => {
-                             hoverOutQuadrantEffect(g, quadrantIndex)
-                           })
-                           .on('click', ({ quadrant, name }) => {
-                             clickOnBlip(quadrant, name)
-                           })
+  const eachBlip = blipsSVGGroup.selectAll('g.blip')
+                                .data(enhancedBlips)
+                                .enter()
+                                  .append('g')
+                                  .attr('class', 'blip')
+                                  .attr('quadrant-name', d => d.quadrant)
+                                  .attr('quadrant-index', d => d.quadrantIndex)
+                                  .style('cursor', 'pointer')
+                                  .style('pointer-events', 'click')
+                                  .on('mouseover', ({ quadrantIndex }) => {
+                                    hoverInQuadrantEffect(rootSVGGroupToDraw, quadrantIndex)
+                                    hoverOnQuadrant(quadrantIndex)
+                                  })
+                                  .on('mouseout', ({ quadrantIndex}) => {
+                                    hoverOutQuadrantEffect(rootSVGGroupToDraw, quadrantIndex)
+                                  })
+                                  .on('click', ({ quadrant, name }) => {
+                                    clickOnBlip(quadrant, name)
+                                  })
 
   const eachBlipSymbol = eachBlip.append(d => document.createElementNS(d3.namespaces.svg, d.shapeName))
                                  .attr('class', 'blip-element blip-symbol')
@@ -112,51 +125,60 @@ export default (
     }
   }
 
-  const simulation = d3.forceSimulation(enhancedBlips)
-                       .force('radial', d3.forceRadial(d => (d as BlipSimulationNode).r))
-                       .force('in-quandrant', forceWithinQuandrant())
-                       .on('tick', positionSymbolAndText(false))
-                       .alphaDecay(0.01)
+  const radialSimulation = d3.forceSimulation(enhancedBlips)
+                             .force('radial', d3.forceRadial(d => (d as BlipSimulationNode).distanceToCenter))
+                             .force('in-quandrant', forceWithinQuandrant())
+                             .on('tick', positionSymbolAndText(false))
+                             .alphaDecay(0.01)
 
-
+                       
   const BLIP_COLLIDE_RADIUS_MARGIN = 10
-  const addPlaceholdingCircleForRadialCollideForce = (blips: BlipSimulationNode[]) => blips.flatMap((blip, index) => {
-    blip.radius = Math.max(blipSymbolBBox(index).width, blipSymbolBBox(index).height) / 2 + BLIP_COLLIDE_RADIUS_MARGIN
-    const placeholdingCircleAmount = blipTextBBox(index).height === 0 ? 0 : Math.floor(blipTextBBox(index).width / blipTextBBox(index).height)
+  const textPlaceHoldingCircleNodes: TextPlaceholdingCircleSimulationNode[] = enhancedBlips.flatMap((blip, index) => {
+    blip.collideRadius = Math.max(
+      blipSymbolBBox(index).width,
+      blipSymbolBBox(index).height
+    ) / 2 + BLIP_COLLIDE_RADIUS_MARGIN
+
+    let placeholdingCircleAmount = 0
+    if (blipTextBBox(index).height !== 0) {
+      placeholdingCircleAmount = Math.floor(blipTextBBox(index).width / blipTextBBox(index).height)
+    }
+
     return [
-      blip,
       ...[...Array.from(Array(placeholdingCircleAmount).keys())].map(nthForBlip => ({
         dad: blip,
-        isPlaceholder: true,
         nth: nthForBlip,
-        radius: blipTextBBox(index).height / 2,
+        collideRadius: blipTextBBox(index).height / 2,
         x: 0,
         y: 0,
       }))
     ]
   })
-  const withPlaceholdingCircles = addPlaceholdingCircleForRadialCollideForce(enhancedBlips)
 
-  const eachPlaceholdingCircle = g.select('g.blips').selectAll('g.fake-circle')
-                                                    .data(withPlaceholdingCircles.filter(d => d.isPlaceholder))
-                                                    .enter()
-                                                      .append('g')
-                                                      .attr('class', 'fake-circle')
-                                                      .append('circle')
-                                                      .style('pointer-events', 'none')
-                                                      .attr('r', d => d.radius || null)
-                                                      .attr('cx', d => d.x)
-                                                      .attr('cy', d => d.x)
-                                                      .attr('fill-opacity', 0)
-                                                      .attr('stroke', '#000000')
-                                                      .attr('stroke-opacity', 0)
-                                                      .attr('dad-name', d => d.dad ? d.dad.name : '')
+  const eachPlaceholdingCircle = rootSVGGroupToDraw.select('g.blips')
+                                                   .selectAll('g.fake-circle')
+                                                   .data(textPlaceHoldingCircleNodes)
+                                                   .enter()
+                                                     .append('g')
+                                                     .attr('class', 'fake-circle')
+                                                     .append('circle')
+                                                     .style('pointer-events', 'none')
+                                                     .attr('r', d => d.collideRadius)
+                                                     .attr('cx', d => d.x)
+                                                     .attr('cy', d => d.x)
+                                                     .attr('fill-opacity', 0)
+                                                     .attr('stroke', '#000000')
+                                                     .attr('stroke-opacity', 0)
+                                                     .attr('dad-name', d => d.dad.name)
 
-  const simulation2 = d3.forceSimulation(withPlaceholdingCircles)
-                        .force('collide', d3.forceCollide(d => (d as BlipSimulationNode).radius || 0).strength(0.999))
+  const blipsAndTextPlaceHoldingCircleNodes: CollideAvoidNode[] = (enhancedBlips as CollideAvoidNode[]).concat(
+    textPlaceHoldingCircleNodes as CollideAvoidNode[]
+  )
+  const collideAvoidSimulation = d3.forceSimulation(blipsAndTextPlaceHoldingCircleNodes)
+                        .force('collide', d3.forceCollide(d => (d as BlipSimulationNode).collideRadius).strength(0.999))
                         .force('position-placeholding-circles', forcePlaceholdingCirclesTailingDad())
                         .on('tick', positionSymbolAndText(true))
                         .alphaDecay(0.01)
 
-  return { blipsG, eachBlip, eachPlaceholdingCircle, simulation, simulation2 }
+  return { radialSimulation, collideAvoidSimulation }
 }

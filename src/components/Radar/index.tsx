@@ -6,10 +6,10 @@ import DetailSection from './DetailSection'
 import initateSvg from './d3/InitateSvg'
 import drawBackgroundCirclesAndAxis from './d3/DrawBackgroundCirclesAndAxis'
 import drawQuadrantLabels from './d3/DrawQuadrantLabels'
-import drawBlips, { BlipSimulationNode } from './d3/DrawBlips'
+import drawBlips, { BlipSimulationNode, CollideAvoidNode } from './d3/DrawBlips'
 
 import './index.css'
-import { Simulation, SimulationNodeDatum } from 'd3-force'
+import { Simulation } from 'd3-force'
 
 export interface Blip {
   quadrant: string,
@@ -29,8 +29,8 @@ interface RadarState {
 export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
   svgId: string
   simulationRefs: {
-    simulation: Simulation<BlipSimulationNode, undefined>,
-    simulation2: Simulation<BlipSimulationNode, undefined> | any,
+    radialSimulation: Simulation<BlipSimulationNode, undefined>,
+    collideAvoidSimulation: Simulation<CollideAvoidNode, undefined>,
   }
   rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>
 
@@ -39,8 +39,8 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
 
     this.svgId = 'radar-chart-svg'
     this.simulationRefs = {
-      simulation: d3.forceSimulation(),
-      simulation2: d3.forceSimulation(),
+      radialSimulation: d3.forceSimulation(),
+      collideAvoidSimulation: d3.forceSimulation(),
     }
     this.rootSVGGroupToDraw = d3.select('_')
 
@@ -94,10 +94,10 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
   drawQuadrantLabelsAndBlips() {
     const { blips } = this.props
     const { radius } = this.dimensionalSizes
-    const { simulation, simulation2 } = this.simulationRefs
+    const { radialSimulation, collideAvoidSimulation } = this.simulationRefs
 
-    simulation.stop()
-    simulation2.stop()
+    radialSimulation.stop()
+    collideAvoidSimulation.stop()
 
     const highlightQuadrant = (quadrantIndex: number) => this.setState({ highlightedQuadrantIndex: quadrantIndex })
 
@@ -115,8 +115,8 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
       highlightQuadrant,
       this.clickOnBlip
     )
-    this.simulationRefs.simulation = newSimulations.simulation
-    this.simulationRefs.simulation2 = newSimulations.simulation2
+    this.simulationRefs.radialSimulation = newSimulations.radialSimulation
+    this.simulationRefs.collideAvoidSimulation = newSimulations.collideAvoidSimulation
   }
 
   componentDidMount() {
