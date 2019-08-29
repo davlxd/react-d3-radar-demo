@@ -1,6 +1,9 @@
+import { BlipSimulationNode } from "./DrawBlips"
+
 export default () => {
-  let nodes
+  let nodes: BlipSimulationNode[]
   const BOUNDARY_PADDING = 12
+
   const force = () => {
     nodes.forEach(node => {
       const quadrantIndex = node.quadrantIndex
@@ -20,7 +23,7 @@ export default () => {
     })
   }
 
-  force.initialize = (_) => nodes = _
+  force.initialize = (_: BlipSimulationNode[]) => nodes = _
 
   return force
 }

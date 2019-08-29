@@ -1,8 +1,8 @@
 import * as d3 from 'd3'
 import { Blip } from '..'
 
-import forceWithinQuandrant from './force-within-quadrant'
-import forcePlaceholdingCirclesTailingDad from './force-placeholding-circles-tailing-dad'
+import forceOfWithinQuandrant from './ForceOfWithinQuadrant'
+import forceOfPlaceholdingCirclesTailingDad from './ForceOfPlaceholdingCirclesTailingDad'
 import {
   hoverInQuadrantEffect,
   hoverOutQuadrantEffect
@@ -12,6 +12,8 @@ import {
 export interface BlipSimulationNode extends Blip { 
   x: number,
   y: number,
+  vx: number,
+  vy: number,
   distanceToCenter: number,
   quadrantIndex: number,
   shapeName: string,
@@ -57,6 +59,8 @@ const attachSimulationDataToBlips = (
       collideRadius: 0, // will set later via reflection
       x: 0,
       y: 0,
+      vx: 0,
+      vy: 0,
     }
   })
 }
@@ -127,7 +131,7 @@ export default (
 
   const radialSimulation = d3.forceSimulation(enhancedBlips)
                              .force('radial', d3.forceRadial(d => (d as BlipSimulationNode).distanceToCenter))
-                             .force('in-quandrant', forceWithinQuandrant())
+                             .force('in-quandrant', forceOfWithinQuandrant())
                              .on('tick', positionSymbolAndText(false))
                              .alphaDecay(0.01)
 
@@ -176,7 +180,7 @@ export default (
   )
   const collideAvoidSimulation = d3.forceSimulation(blipsAndTextPlaceHoldingCircleNodes)
                         .force('collide', d3.forceCollide(d => (d as BlipSimulationNode).collideRadius).strength(0.999))
-                        .force('position-placeholding-circles', forcePlaceholdingCirclesTailingDad())
+                        .force('position-placeholding-circles', forceOfPlaceholdingCirclesTailingDad())
                         .on('tick', positionSymbolAndText(true))
                         .alphaDecay(0.01)
 
