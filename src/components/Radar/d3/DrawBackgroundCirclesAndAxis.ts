@@ -6,6 +6,8 @@ import {
 
 export default (
   rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
+  width: number,
+  height: number,
   radius: number, 
   quadrantNames: string[],
   hoverOnQuadrant: (quadrantIndex: number) => void
@@ -37,6 +39,25 @@ export default (
 
   const backgroundSVGGroup = rootSVGGroupToDraw.append('g').attr('class', 'background')
 
+  backgroundSVGGroup.append('g')
+                      .attr('class', 'quadrant-rect-backdrop')
+                      .selectAll('rect')
+                      .data(quadrantNames)
+                      .enter()
+                        .append('rect')
+                        .attr('x', (d, i) => i === 0 || i === 1 ? 0 : - width / 2)
+                        .attr('y', (d, i) => i === 1 || i === 2 ? 0 : - height / 2)
+                        .attr('width', width / 2)
+                        .attr('height', height / 2)
+                        .attr('fill-opacity', 0)
+                        .style('z-index', -100)
+                        .on('mouseover', (d, i) => {
+                          hoverInQuadrantEffect(rootSVGGroupToDraw, i)
+                          hoverOnQuadrant(i)
+                        })
+                        .on('mouseout', (d, i) => {
+                          hoverOutQuadrantEffect(rootSVGGroupToDraw, i)
+                        })
 
   const quadrantSVGGroup = backgroundSVGGroup.append('g').attr('class', 'background-circle')
                                              .selectAll('path')

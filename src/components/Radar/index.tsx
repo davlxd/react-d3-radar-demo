@@ -85,6 +85,8 @@ export default class Radar extends Component<{ blips: Blip[] }, RadarState>  {
     this.rootSVGGroupToDraw = initateSvg(svgId, width, height)
     drawBackgroundCirclesAndAxis(
       this.rootSVGGroupToDraw,
+      width,
+      height,
       radius,
       this.quadrantNames,
       toHighlightQuadrant
