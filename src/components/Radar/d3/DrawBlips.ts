@@ -35,7 +35,7 @@ export interface CollideAvoidNode {
 }
 
 const attachSimulationDataToBlips = (
-  radius: number,
+  rootSVGRadius: number,
   blips: Blip[]
 ): BlipSimulationNode[] => {
   const blipShapes = [ { shapeName: 'rect', }, { shapeName: 'circle', } ]
@@ -47,7 +47,7 @@ const attachSimulationDataToBlips = (
                                     }, [Infinity, -Infinity])
   const scoreToRadiusScale = d3.scaleLinear()
                                .domain(minAndMaxOfBlipScore)
-                               .range([radius, 50])
+                               .range([rootSVGRadius, 50])
 
   return blips.map(blip => {
     const quadrantIndex = uniqueQuadrantNames.indexOf(blip.quadrant)
@@ -67,13 +67,13 @@ const attachSimulationDataToBlips = (
 
 export default (
   rootSVGGroupToDraw: d3.Selection<SVGGElement, unknown, HTMLElement, any>, 
-  radius: number, 
+  rootSVGRadius: number,
   blips: Blip[], 
   hoverOnQuadrant: (quadrantIndex: number) => void, 
   clickOnBlip: (quadrant: string, name: string) => void
 ) => {
   const color = d3.scaleOrdinal(d3.schemeCategory10)
-  const enhancedBlips = attachSimulationDataToBlips(radius, blips)
+  const enhancedBlips = attachSimulationDataToBlips(rootSVGRadius, blips)
 
   const blipsSVGGroup = rootSVGGroupToDraw.append('g')
                                           .attr('class', 'blips')
